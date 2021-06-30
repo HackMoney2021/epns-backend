@@ -12,7 +12,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // const express = require("express");
 require('dotenv').config();
 const config_1 = require("./config/config");
-// const app = express();
 const sendLowBalanceNotif = (address, token) => {
     const title = "Your stream is running out of funds!";
     const message = `Top up your balance of ${token} or your stream will run dry`;
@@ -36,11 +35,11 @@ const getSubs = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     ;
 });
-const johnsmm = "0x0f14E34723997e1E1e2B7E3760178c98B22651ab";
+const johnsmeta = "0x0f14E34723997e1E1e2B7E3760178c98B22651ab";
 // console.log(sdk);
 // getSubs();
-sendLowBalanceNotif(johnsmm, "ETHx");
-// constants
+sendLowBalanceNotif(johnsmeta, "ETHx");
+// const app = express();
 // const port = process.env.PORT;
 // // routes
 // app.get('/', (_: any, res: any) => {
@@ -52,6 +51,9 @@ sendLowBalanceNotif(johnsmm, "ETHx");
 // monitor subbed addresses via superfluid sdk -> ping epns methods
 // epns methods:
 //    - low balance notif: notify user stream will run out in x hours / days idk
+//    - incoming / outgoing stream cancelled
+//    - outgoing stream run dry
+//    - new incoming stream
 // ISSUES
 // contract isn't being instantiated and so signingContract.sendNotification() throws error as it is "not a function"
 //# sourceMappingURL=index.js.map
