@@ -1,5 +1,5 @@
-import epnsHelper, {InfuraSettings, NetWorkSettings, EPNSSettings} from '@epnsproject/backend-sdk';
-import * as EPNS_ABI from "./ABIs";
+import epnsHelper, { InfuraSettings, NetWorkSettings, EPNSSettings } from '@epnsproject/backend-sdk';
+import { EPNS_ABI } from "./ABIs";
 
 // InfuraSettings contains setttings details on infura
 const infuraSettings: InfuraSettings = {
@@ -17,8 +17,8 @@ const settings: NetWorkSettings = {
 const epnsSettings: EPNSSettings = {
   network: 'ropsten',
   contractAddress: '0xc882dA9660d29c084345083922F8a9292E58787D',
-  contractABI: EPNS_ABI.toString()
+  contractABI: EPNS_ABI
 }
 
 // NB: Either one or both alchemy and infura has to be passed in to the sdk settings
-export const sdk = new epnsHelper('ropsten', process.env.STREAM_PRIVATE_KEY, settings, epnsSettings)
+export const sdk = new epnsHelper('ropsten', process.env.STREAM_PRIVATE_KEY, settings, epnsSettings);
