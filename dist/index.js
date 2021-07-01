@@ -12,12 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 require('dotenv').config();
 const config_1 = require("./config/config");
-const sendLowBalanceNotif = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
+// notifies subscriber when their stream is running low on funds
+const lowBalanceWarning = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
     const title = "Your stream is running out of funds!";
     const message = `Top up your balance of ${token} or your stream will run dry`;
     const pTitle = `Low balance for ${address}`;
     const pMessage = `${address} is running low on ${token}`;
-    // set to true for dev, false for prod
     try {
         yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false);
     }
@@ -25,7 +25,8 @@ const sendLowBalanceNotif = (address, token) => __awaiter(void 0, void 0, void 0
         console.error(e);
     }
 });
-const streamCancelled = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
+// notifies user when a stream of theirs has been cancelled
+const streamCancelledAlert = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
     const title = "Your stream has been cancelled";
     const message = `Your stream of ${token} has been cancelled`;
     const pTitle = `Cancelled stream for ${address}`;
@@ -37,7 +38,8 @@ const streamCancelled = (address, token) => __awaiter(void 0, void 0, void 0, fu
         console.error(e);
     }
 });
-const streamHasRunOut = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
+// notifies subscriber when one of their streams has run out
+const streamHasRunOutAlert = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
     const title = "Your stream has run out of funds!";
     const message = `Your stream of ${token} has run out of funds`;
     const pTitle = `Dry stream for ${address}`;
@@ -49,7 +51,8 @@ const streamHasRunOut = (address, token) => __awaiter(void 0, void 0, void 0, fu
         console.error(e);
     }
 });
-const newIncomingStream = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
+// notifies a subscriber when they receive a new stream
+const newIncomingStreamAlert = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
     const title = "You have a new stream!";
     const message = `You have a new incoming stream of ${token}`;
     const pTitle = `New stream for ${address}`;
@@ -61,7 +64,8 @@ const newIncomingStream = (address, token) => __awaiter(void 0, void 0, void 0, 
         console.error(e);
     }
 });
-const getSubs = () => __awaiter(void 0, void 0, void 0, function* () {
+// returns an array of addresses (strings) that are currently subbed to the channel
+const getChannelSubscribers = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let users = yield config_1.sdk.getSubscribedUsers();
         console.log(users);

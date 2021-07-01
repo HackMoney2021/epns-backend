@@ -2,7 +2,8 @@ const express = require("express");
 require('dotenv').config();
 import { sdk } from "./config/config";
 
-const sendLowBalanceNotif = async (address: string, token: string) => {
+// notifies subscriber when their stream is running low on funds
+const lowBalanceWarning = async (address: string, token: string) => {
   const title: string = "Your stream is running out of funds!";
   const message: string = `Top up your balance of ${token} or your stream will run dry`;
   const pTitle: string = `Low balance for ${address}`;
@@ -14,7 +15,8 @@ const sendLowBalanceNotif = async (address: string, token: string) => {
   }
 }
 
-const streamCancelled = async (address: string, token: string) => {
+// notifies user when a stream of theirs has been cancelled
+const streamCancelledAlert = async (address: string, token: string) => {
   const title: string = "Your stream has been cancelled";
   const message: string = `Your stream of ${token} has been cancelled`;
   const pTitle: string = `Cancelled stream for ${address}`;
@@ -26,7 +28,8 @@ const streamCancelled = async (address: string, token: string) => {
   }
 }
 
-const streamHasRunOut = async (address: string, token: string) => {
+// notifies subscriber when one of their streams has run out
+const streamHasRunOutAlert = async (address: string, token: string) => {
   const title: string = "Your stream has run out of funds!";
   const message: string = `Your stream of ${token} has run out of funds`;
   const pTitle: string = `Dry stream for ${address}`;
@@ -38,7 +41,8 @@ const streamHasRunOut = async (address: string, token: string) => {
   }
 }
 
-const newIncomingStream = async (address: string, token: string) => {
+// notifies a subscriber when they receive a new stream
+const newIncomingStreamAlert = async (address: string, token: string) => {
   const title: string = "You have a new stream!";
   const message: string = `You have a new incoming stream of ${token}`;
   const pTitle: string = `New stream for ${address}`;
@@ -50,7 +54,8 @@ const newIncomingStream = async (address: string, token: string) => {
   }
 }
 
-const getSubs = async () => {
+// returns an array of addresses (strings) that are currently subbed to the channel
+const getChannelSubscribers = async () => {
   try {
     let users = await sdk.getSubscribedUsers();
     console.log(users);

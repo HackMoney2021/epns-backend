@@ -20,4 +20,10 @@ const epnsSettings: EPNSSettings = {
   contractABI: EPNS_ABI
 }
 
-export const sdk = new epnsHelper('ropsten', process.env.STREAM_PRIVATE_KEY, settings, epnsSettings); 
+// initialising and exporting sdk object
+// params
+// - network: currently only supports 'ropsten'
+// - channel key: the private key of the address used to create the channel
+// - settings: network settings (provider settings)
+// - epnsSettings: epns's ropsten contract information
+export const sdk = new epnsHelper('ropsten', process.env.CHANNEL_PRIVATE_KEY, settings, epnsSettings); 
