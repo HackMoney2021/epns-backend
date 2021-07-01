@@ -13,8 +13,8 @@ const infuraSettings = {
 };
 // Network settings contains details on alchemy, infura and etherscan
 const settings = {
-    infura: infuraSettings
-    // etherscan: process.env.ETHERSCAN_API_KEY
+    infura: infuraSettings,
+    etherscan: process.env.ETHERSCAN_API_KEY
 };
 // EPNSSettings settings contains details on EPNS network, contract address and contract ABI
 const epnsSettings = {
