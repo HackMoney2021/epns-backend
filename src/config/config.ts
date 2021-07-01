@@ -21,4 +21,4 @@ const epnsSettings: EPNSSettings = {
 }
 
 // NB: Either one or both alchemy and infura has to be passed in to the sdk settings
-export const sdk = new epnsHelper('ropsten', process.env.STREAM_PRIVATE_KEY, settings, epnsSettings);
+export const sdk = new epnsHelper('ropsten', process.env.STREAM_PRIVATE_KEY, settings, epnsSettings); 

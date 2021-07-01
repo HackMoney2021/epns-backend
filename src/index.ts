@@ -62,9 +62,8 @@ const getSubs = async () => {
 
 const johnsmeta = "0x0f14E34723997e1E1e2B7E3760178c98B22651ab";
 
-// console.log(sdk);
 // getSubs();
-sendLowBalanceNotif(johnsmeta, "ETHx");
+// sendLowBalanceNotif(johnsmeta, "ETHx");
 
 // const app = express();
 // const port = process.env.PORT;
@@ -75,15 +74,6 @@ sendLowBalanceNotif(johnsmeta, "ETHx");
 // })
 
 // app.listen(port, () => console.log(`Running on port ${port}`));
-
-// TODO
-// use getSubs() to determine what addresses to monitor
-// monitor subbed addresses via superfluid sdk -> ping epns methods
-// epns methods:
-//    - low balance notif: notify user stream will run out in x hours / days idk
-//    - incoming / outgoing stream cancelled
-//    - outgoing stream run dry
-//    - new incoming stream
 
 // ISSUES
 // contract isn't being instantiated and so signingContract.sendNotification() 

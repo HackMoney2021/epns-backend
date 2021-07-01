@@ -15,9 +15,45 @@ const config_1 = require("./config/config");
 const sendLowBalanceNotif = (address, token) => {
     const title = "Your stream is running out of funds!";
     const message = `Top up your balance of ${token} or your stream will run dry`;
-    const pTitle = `Low balance notif for ${address}`;
+    const pTitle = `Low balance for ${address}`;
     const pMessage = `${address} is running low on ${token}`;
     // set to true for dev, false for prod
+    try {
+        config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false).then(() => console.log("notif sent"));
+    }
+    catch (e) {
+        console.error(e);
+    }
+};
+const streamCancelled = (address, token) => {
+    const title = "Your stream has been cancelled";
+    const message = `Your stream of ${token} has been cancelled`;
+    const pTitle = `Cancelled stream for ${address}`;
+    const pMessage = `${address} had a stream cancelled of ${token}`;
+    try {
+        config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false).then(() => console.log("notif sent"));
+    }
+    catch (e) {
+        console.error(e);
+    }
+};
+const streamHasRunOut = (address, token) => {
+    const title = "Your stream has run out of funds!";
+    const message = `Your stream of ${token} has run out of funds`;
+    const pTitle = `Dry stream for ${address}`;
+    const pMessage = `${address} had a stream of ${token} run out of funds`;
+    try {
+        config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false).then(() => console.log("notif sent"));
+    }
+    catch (e) {
+        console.error(e);
+    }
+};
+const newIncomingStream = (address, token) => {
+    const title = "You have a new stream!";
+    const message = `You have a new incoming stream of ${token}`;
+    const pTitle = `New stream for ${address}`;
+    const pMessage = `${address} has a new stream of ${token}`;
     try {
         config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false).then(() => console.log("notif sent"));
     }
@@ -36,9 +72,9 @@ const getSubs = () => __awaiter(void 0, void 0, void 0, function* () {
     ;
 });
 const johnsmeta = "0x0f14E34723997e1E1e2B7E3760178c98B22651ab";
-// console.log(sdk);
+console.log(config_1.sdk.epns);
 // getSubs();
-sendLowBalanceNotif(johnsmeta, "ETHx");
+// sendLowBalanceNotif(johnsmeta, "ETHx");
 // const app = express();
 // const port = process.env.PORT;
 // // routes
@@ -46,14 +82,7 @@ sendLowBalanceNotif(johnsmeta, "ETHx");
 //   res.status(200).send()
 // })
 // app.listen(port, () => console.log(`Running on port ${port}`));
-// TODO
-// use getSubs() to determine what addresses to monitor
-// monitor subbed addresses via superfluid sdk -> ping epns methods
-// epns methods:
-//    - low balance notif: notify user stream will run out in x hours / days idk
-//    - incoming / outgoing stream cancelled
-//    - outgoing stream run dry
-//    - new incoming stream
 // ISSUES
-// contract isn't being instantiated and so signingContract.sendNotification() throws error as it is "not a function"
+// contract isn't being instantiated and so signingContract.sendNotification() 
+//    throws error as it is "not a function"
 //# sourceMappingURL=index.js.map
