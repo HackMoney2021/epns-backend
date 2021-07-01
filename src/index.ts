@@ -62,7 +62,7 @@ const getSubs = async () => {
 
 const johnsmeta = "0x0f14E34723997e1E1e2B7E3760178c98B22651ab";
 
-// getSubs();
+getSubs(); 
 // sendLowBalanceNotif(johnsmeta, "ETHx");
 
 // const app = express();
