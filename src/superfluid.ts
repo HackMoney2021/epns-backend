@@ -80,3 +80,20 @@ const checkForLowBalances = async (subscribers: string[]) => {
     // check for new subs every min
     setTimeout(superfluidMain, 0.2 * msPerMin);
 }
+
+const checkForUpdatedStream = async (subscribers: string[]) => {
+    // Filters events on ConstantFlowAgreement contract for FlowUpdated() events in last few blocks
+
+    let filter = sf.agreements.cfa.filters.FlowUpdated() 
+
+    // Set block range 
+    filter.fromBlock = provider.getBlockNumber().then((b:number) => b - 10000); // To do: replace fromBlock with the last toBlock used
+    filter.toBlock = "latest";
+
+    // And query:
+    provider.getLogs(filter).then((logs:any) => {
+        logs.forEach((tx: any) => {
+            console.log(sf.agreements.cfa.interface.parseLog(tx));
+        });
+    });
+}
