@@ -11,14 +11,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getChannelSubscribers = exports.newIncomingStreamAlert = exports.streamHasRunOutAlert = exports.streamCancelledAlert = exports.lowBalanceWarning = void 0;
 const config_1 = require("./config/config");
+const devMode = true;
 // notifies subscriber when their stream is running low on funds
 const lowBalanceWarning = (address, token, daysRemaining) => __awaiter(void 0, void 0, void 0, function* () {
+    const daysRem = parseFloat(daysRemaining).toFixed(1);
     const title = "Your stream is running out of funds!";
-    const message = `Top up your balance of ${token} or your stream will run dry in ${daysRemaining}`;
+    const message = `Top up your balance of ${token} or your streams will run dry in ${daysRem} days`;
     const pTitle = `Low balance for ${address}`;
     const pMessage = `${address} is running low on ${token}`;
     try {
-        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false);
+        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, devMode);
     }
     catch (e) {
         console.error(e);
@@ -32,7 +34,7 @@ const streamCancelledAlert = (address, token) => __awaiter(void 0, void 0, void 
     const pTitle = `Cancelled stream for ${address}`;
     const pMessage = `${address} had a stream cancelled of ${token}`;
     try {
-        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false);
+        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, devMode);
     }
     catch (e) {
         console.error(e);
@@ -46,7 +48,7 @@ const streamHasRunOutAlert = (address, token) => __awaiter(void 0, void 0, void 
     const pTitle = `Dry stream for ${address}`;
     const pMessage = `${address} had a stream of ${token} run out of funds`;
     try {
-        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false);
+        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, devMode);
     }
     catch (e) {
         console.error(e);
@@ -60,7 +62,7 @@ const newIncomingStreamAlert = (address, token) => __awaiter(void 0, void 0, voi
     const pTitle = `New stream for ${address}`;
     const pMessage = `${address} has a new stream of ${token}`;
     try {
-        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, false);
+        yield config_1.sdk.sendNotification(address, title, message, pTitle, pMessage, 3, devMode);
     }
     catch (e) {
         console.error(e);

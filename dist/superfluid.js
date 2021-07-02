@@ -13,16 +13,15 @@ exports.initSF = void 0;
 const SuperfluidSDK = require("@superfluid-finance/js-sdk");
 const { AlchemyProvider } = require("@ethersproject/providers");
 const { Wallet } = require("@ethersproject/wallet");
-const { Contract } = require("@ethersproject/contracts");
 const { networkSecrets, accountSecrets } = require('./config/config');
 const { getChannelSubscribers } = require("./epns");
 const { BigNumber } = require('@ethersproject/bignumber');
 const epns_1 = require("./epns");
 const provider = new AlchemyProvider("ropsten", networkSecrets.alchemyKey);
-const signer = new Wallet(accountSecrets.privateKey, provider);
+const supportedTokens = ["ETHx"];
 const sf = new SuperfluidSDK.Framework({
     ethers: provider,
-    tokens: ["ETHx"]
+    tokens: supportedTokens
 });
 const initSF = () => __awaiter(void 0, void 0, void 0, function* () {
     yield sf.initialize();
@@ -33,49 +32,55 @@ const superfluidMain = () => __awaiter(void 0, void 0, void 0, function* () {
     var subscribers = yield getChannelSubscribers();
     checkForLowBalances(subscribers);
 });
-var lowBalanceNotifSentMap = new Map();
+const msPerDay = 86400000;
+const msPerMin = 60000;
+var notificationMap = new Map();
 const checkForLowBalances = (subscribers) => __awaiter(void 0, void 0, void 0, function* () {
     subscribers.forEach((address) => __awaiter(void 0, void 0, void 0, function* () {
-        // initialises superfluid user object
-        let user = sf.user({ address: address, token: sf.tokens.ETHx.address });
-        try {
-            // returns account details of user
-            var details = yield user.details();
-            let netFlow = details.cfa.netFlow;
-            // if users outgoing > incoming
-            if (netFlow < 0) {
-                const ethxContract = new Contract(sf.tokens.ETHx.address, sf.contracts.ISuperToken.abi, signer);
-                var balance = yield ethxContract.realtimeBalanceOfNow(address);
-                var available = balance.availableBalance;
-                var bigNumberNetFlow = BigNumber.from(netFlow * -1);
-                let timeRemaining = available.div(bigNumberNetFlow);
-                let daysRemaining = (((timeRemaining / 60) / 60) / 24);
-                if (daysRemaining < 5) {
-                    var date = new Date();
-                    var now = date.getTime();
-                    if (lowBalanceNotifSentMap.has(address)) {
-                        var sentTime = lowBalanceNotifSentMap.get(address);
-                        // 86400000 ms in a day
-                        if (now - sentTime > 86400000) {
-                            lowBalanceNotifSentMap.set(address, now);
-                            epns_1.lowBalanceWarning(address, 'ETHx', daysRemaining.toString());
+        supportedTokens.forEach((token) => __awaiter(void 0, void 0, void 0, function* () {
+            // initialises superfluid user object with specific token
+            let user = sf.user({ address: address, token: sf.tokens[token].address });
+            try {
+                // returns account details of user
+                var details = yield user.details();
+                let netFlow = details.cfa.netFlow;
+                // if users outgoing > incoming
+                if (netFlow < 0) {
+                    var balance = yield sf.tokens[token].realtimeBalanceOfNow(address);
+                    var available = balance.availableBalance;
+                    var bigNumberNetFlow = BigNumber.from(netFlow * -1);
+                    let timeRemaining = available.div(bigNumberNetFlow);
+                    let daysRemaining = (((timeRemaining / 60) / 60) / 24);
+                    if (daysRemaining < 5) {
+                        var date = new Date();
+                        var now = date.getTime();
+                        // need to check if we've already notified (currently once per day)
+                        if (notificationMap.has(address)) {
+                            let tokenMap = notificationMap.get(address);
+                            var sentTime = tokenMap.get(token);
+                            if (now - sentTime > msPerDay) {
+                                tokenMap.set(token, now);
+                                notificationMap.set(address, tokenMap);
+                                epns_1.lowBalanceWarning(address, token, daysRemaining);
+                            } //else {
+                            // console.log(`low bal for ${address} - notif already sent`);
+                            // }
                         }
                         else {
-                            console.log(`low bal for ${address} - notif already sent`);
+                            let tokenMap = new Map();
+                            tokenMap.set(token, now);
+                            notificationMap.set(address, tokenMap);
+                            epns_1.lowBalanceWarning(address, token, daysRemaining);
                         }
-                    }
-                    else {
-                        lowBalanceNotifSentMap.set(address, now);
-                        epns_1.lowBalanceWarning(address, 'ETHx', daysRemaining.toString());
                     }
                 }
             }
-        }
-        catch (e) {
-            console.error(e);
-        }
+            catch (e) {
+                console.error(e);
+            }
+        }));
     }));
     // check for new subs every min
-    setTimeout(superfluidMain, 60000);
+    setTimeout(superfluidMain, 0.2 * msPerMin);
 });
 //# sourceMappingURL=superfluid.js.map
