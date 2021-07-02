@@ -48,6 +48,7 @@ const checkForLowBalances = async (subscribers: string[]) => {
                 if (daysRemaining < 5) {
                     var date = new Date();
                     var now = date.getTime();
+                    // need to check if we've already notified (currently once per day)
                     if (lowBalanceNotifSentMap.has(address)) {
                         var sentTime = lowBalanceNotifSentMap.get(address);
                         const msPerDay = 86400000;
