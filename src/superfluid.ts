@@ -37,8 +37,7 @@ const checkForLowBalances = async (subscribers: string[]) => {
 
             // if users outgoing > incoming
             if (netFlow < 0) {
-                const ethxContract = new Contract(sf.tokens.ETHx.address, sf.contracts.ISuperToken.abi, signer);
-                var balance = await ethxContract.realtimeBalanceOfNow(address);
+                var balance = await sf.tokens.ETHx.realtimeBalanceOfNow(address);
                 var available = balance.availableBalance;
                 var bigNumberNetFlow = BigNumber.from(netFlow * -1);
 
@@ -70,4 +69,21 @@ const checkForLowBalances = async (subscribers: string[]) => {
     })
     // check for new subs every min
     setTimeout(superfluidMain, 60000);
+}
+
+const checkForUpdatedStream = async (subscribers: string[]) => {
+    // Filters events on ConstantFlowAgreement contract for FlowUpdated() events in last few blocks
+
+    let filter = sf.agreements.cfa.filters.FlowUpdated() 
+
+    // Set block range 
+    filter.fromBlock = provider.getBlockNumber().then((b:number) => b - 10000); // To do: replace fromBlock with the last toBlock used
+    filter.toBlock = "latest";
+
+    // And query:
+    provider.getLogs(filter).then((logs:any) => {
+        logs.forEach((tx: any) => {
+            console.log(sf.agreements.cfa.interface.parseLog(tx));
+        });
+    });
 }
