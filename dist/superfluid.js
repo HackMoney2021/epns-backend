@@ -32,7 +32,7 @@ const initSF = () => __awaiter(void 0, void 0, void 0, function* () {
 exports.initSF = initSF;
 const superfluidMain = () => __awaiter(void 0, void 0, void 0, function* () {
     var subscribers = yield getChannelSubscribers();
-    // checkForLowBalances(subscribers);
+    checkForLowBalances(subscribers);
     checkForUpdatedStream(subscribers);
 });
 const msPerDay = 86400000;
@@ -105,19 +105,16 @@ const checkForUpdatedStream = (subscribers) => __awaiter(void 0, void 0, void 0,
                 if (subscribers.indexOf(receiver) >= 0) {
                     if (flowRate.gt(0)) {
                         // if flow > 0 -> new incoming stream
-                        console.log("new stream?");
                         epns_1.newIncomingStreamAlert(receiver, token, sender);
                     }
                     else if (flowRate.eq(0)) {
-                        // if flow == 0 -> stream cancelled
-                        console.log("incoming stream cancelled");
+                        // if flow == 0 -> incoming stream cancelled
                         epns_1.streamCancelledAlert(receiver, token, sender);
                     }
                 }
                 if (subscribers.indexOf(sender) >= 0) {
                     if (flowRate.eq(0)) {
-                        // if flow == 0 -> stream ended
-                        console.log("outgoing stream ended");
+                        // if flow == 0 -> outgoing stream ended
                         epns_1.streamHasRunOutAlert(sender, token, receiver);
                     }
                 }
