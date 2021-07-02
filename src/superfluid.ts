@@ -5,7 +5,7 @@ const { networkSecrets, accountSecrets } = require('./config/config');
 const { getChannelSubscribers } = require("./epns");
 const { BigNumber } = require('@ethersproject/bignumber');
 
-import { lowBalanceWarning } from "./epns";
+import { lowBalanceWarning, streamCancelledAlert, streamHasRunOutAlert, newIncomingStreamAlert } from "./epns";
 
 const provider = new AlchemyProvider("ropsten", networkSecrets.alchemyKey);
 
@@ -23,7 +23,8 @@ export const initSF = async () => {
 
 const superfluidMain = async () => {
     var subscribers: string[] = await getChannelSubscribers();
-    checkForLowBalances(subscribers);
+    // checkForLowBalances(subscribers);
+    checkForUpdatedStream(subscribers);
 }
 
 const msPerDay = 86400000;
@@ -91,9 +92,37 @@ const checkForUpdatedStream = async (subscribers: string[]) => {
     filter.toBlock = "latest";
 
     // And query:
-    provider.getLogs(filter).then((logs:any) => {
+    provider.getLogs(filter).then((logs: any) => {
         logs.forEach((tx: any) => {
-            console.log(sf.agreements.cfa.interface.parseLog(tx));
+            let flowUpdatedEvent = sf.agreements.cfa.interface.parseLog(tx);
+            let sender = flowUpdatedEvent.args["sender"];
+            let receiver = flowUpdatedEvent.args["receiver"];
+            let flowRate = flowUpdatedEvent.args["flowRate"];
+
+            // todo extract token & stop repeat notifs
+
+            if (subscribers.indexOf(receiver) >= 0) {
+                if (flowRate.gt(0)) {
+                    // if flow > 0 -> new incoming stream
+                    console.log("new stream?")
+                    newIncomingStreamAlert(receiver, "token", sender);
+                } else if (flowRate.eq(0)) {
+                    // if flow == 0 -> stream cancelled
+                    console.log("incoming stream cancelled");
+                    streamCancelledAlert(receiver, "token", sender);
+                }
+            }
+
+            if (subscribers.indexOf(sender) >= 0) {
+                if (flowRate.eq(0)) {
+                    // if flow == 0 -> stream ended
+                    console.log("outgoing stream ended");
+                    streamHasRunOutAlert(sender, "token", receiver);
+                }
+            }
+            
         });
     });
+    // check for new subs every min
+    setTimeout(superfluidMain, 0.2 * msPerMin);
 }

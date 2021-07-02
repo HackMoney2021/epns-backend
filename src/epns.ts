@@ -17,9 +17,9 @@ export const lowBalanceWarning = async (address: string, token: string, daysRema
 }
 
 // notifies user when a stream of theirs has been cancelled
-export const streamCancelledAlert = async (address: string, token: string) => {
-  const title: string = "Your stream has been cancelled";
-  const message: string = `Your stream of ${token} has been cancelled`;
+export const streamCancelledAlert = async (address: string, token: string, sender: string) => {
+  const title: string = "Your stream has ended";
+  const message: string = `Your stream of ${token} from ${sender} has ended or been cancelled`;
   const pTitle: string = `Cancelled stream for ${address}`;
   const pMessage: string = `${address} had a stream cancelled of ${token}`;
   try {
@@ -30,9 +30,9 @@ export const streamCancelledAlert = async (address: string, token: string) => {
 }
 
 // notifies subscriber when one of their streams has run out
-export const streamHasRunOutAlert = async (address: string, token: string) => {
+export const streamHasRunOutAlert = async (address: string, token: string, receiver: string) => {
   const title: string = "Your stream has run out of funds!";
-  const message: string = `Your stream of ${token} has run out of funds`;
+  const message: string = `Your stream to ${receiver} of ${token} has run out of funds`;
   const pTitle: string = `Dry stream for ${address}`;
   const pMessage: string = `${address} had a stream of ${token} run out of funds`;
   try {
@@ -43,9 +43,9 @@ export const streamHasRunOutAlert = async (address: string, token: string) => {
 }
 
 // notifies a subscriber when they receive a new stream
-export const newIncomingStreamAlert = async (address: string, token: string) => {
+export const newIncomingStreamAlert = async (address: string, token: string, sender: string) => {
   const title: string = "You have a new stream!";
-  const message: string = `You have a new incoming stream of ${token}`;
+  const message: string = `You have a new incoming stream of ${token} from ${sender}`;
   const pTitle: string = `New stream for ${address}`;
   const pMessage: string = `${address} has a new stream of ${token}`;
   try {

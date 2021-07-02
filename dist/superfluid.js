@@ -30,7 +30,8 @@ const initSF = () => __awaiter(void 0, void 0, void 0, function* () {
 exports.initSF = initSF;
 const superfluidMain = () => __awaiter(void 0, void 0, void 0, function* () {
     var subscribers = yield getChannelSubscribers();
-    checkForLowBalances(subscribers);
+    // checkForLowBalances(subscribers);
+    checkForUpdatedStream(subscribers);
 });
 const msPerDay = 86400000;
 const msPerMin = 60000;
@@ -80,6 +81,45 @@ const checkForLowBalances = (subscribers) => __awaiter(void 0, void 0, void 0, f
             }
         }));
     }));
+    // check for new subs every min
+    setTimeout(superfluidMain, 0.2 * msPerMin);
+});
+const checkForUpdatedStream = (subscribers) => __awaiter(void 0, void 0, void 0, function* () {
+    // Filters events on ConstantFlowAgreement contract for FlowUpdated() events in last few blocks
+    let filter = sf.agreements.cfa.filters.FlowUpdated();
+    // Set block range 
+    filter.fromBlock = provider.getBlockNumber().then((b) => b - 10000); // To do: replace fromBlock with the last toBlock used
+    filter.toBlock = "latest";
+    // And query:
+    provider.getLogs(filter).then((logs) => {
+        logs.forEach((tx) => {
+            let flowUpdatedEvent = sf.agreements.cfa.interface.parseLog(tx);
+            // console.log(flowUpdatedEvent);
+            let sender = flowUpdatedEvent.args["sender"];
+            let receiver = flowUpdatedEvent.args["receiver"];
+            let flowRate = flowUpdatedEvent.args["flowRate"];
+            // console.log(receiver);
+            // console.log(flowRate);
+            if (subscribers.indexOf(receiver) >= 0) {
+                if (flowRate.gt(0)) {
+                    // if flow > 0 -> new stream
+                    console.log("new stream?");
+                }
+                else if (flowRate.eq(0)) {
+                    // if flow == 0 -> stream cancelled
+                    console.log("incoming stream cancelled");
+                    epns_1.streamCancelledAlert(receiver, "token", sender);
+                }
+            }
+            if (subscribers.indexOf(sender) >= 0) {
+                if (flowRate.eq(0)) {
+                    // if flow == 0 -> stream ended
+                    console.log("outgoing stream ended");
+                    epns_1.streamHasRunOutAlert(sender, "token", receiver);
+                }
+            }
+        });
+    });
     // check for new subs every min
     setTimeout(superfluidMain, 0.2 * msPerMin);
 });

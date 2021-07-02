@@ -28,9 +28,9 @@ const lowBalanceWarning = (address, token, daysRemaining) => __awaiter(void 0, v
 });
 exports.lowBalanceWarning = lowBalanceWarning;
 // notifies user when a stream of theirs has been cancelled
-const streamCancelledAlert = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
-    const title = "Your stream has been cancelled";
-    const message = `Your stream of ${token} has been cancelled`;
+const streamCancelledAlert = (address, token, sender) => __awaiter(void 0, void 0, void 0, function* () {
+    const title = "Your stream has ended";
+    const message = `Your stream of ${token} from ${sender} has ended or been cancelled`;
     const pTitle = `Cancelled stream for ${address}`;
     const pMessage = `${address} had a stream cancelled of ${token}`;
     try {
@@ -42,9 +42,9 @@ const streamCancelledAlert = (address, token) => __awaiter(void 0, void 0, void 
 });
 exports.streamCancelledAlert = streamCancelledAlert;
 // notifies subscriber when one of their streams has run out
-const streamHasRunOutAlert = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
+const streamHasRunOutAlert = (address, token, receiver) => __awaiter(void 0, void 0, void 0, function* () {
     const title = "Your stream has run out of funds!";
-    const message = `Your stream of ${token} has run out of funds`;
+    const message = `Your stream to ${receiver} of ${token} has run out of funds`;
     const pTitle = `Dry stream for ${address}`;
     const pMessage = `${address} had a stream of ${token} run out of funds`;
     try {
