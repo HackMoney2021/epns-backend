@@ -19,12 +19,14 @@ const { BigNumber } = require('@ethersproject/bignumber');
 const epns_1 = require("./epns");
 const provider = new AlchemyProvider("ropsten", networkSecrets.alchemyKey);
 const supportedTokens = ["ETHx"];
+const tokenAddresses = new Map();
 const sf = new SuperfluidSDK.Framework({
     ethers: provider,
     tokens: supportedTokens
 });
 const initSF = () => __awaiter(void 0, void 0, void 0, function* () {
     yield sf.initialize();
+    tokenAddresses.set("0x6fC99F5591b51583ba15A8C2572408257A1D2797", "ETHx");
     superfluidMain();
 });
 exports.initSF = initSF;
@@ -35,7 +37,7 @@ const superfluidMain = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const msPerDay = 86400000;
 const msPerMin = 60000;
-var notificationMap = new Map();
+var lowBalNotificationMap = new Map();
 const checkForLowBalances = (subscribers) => __awaiter(void 0, void 0, void 0, function* () {
     subscribers.forEach((address) => __awaiter(void 0, void 0, void 0, function* () {
         supportedTokens.forEach((token) => __awaiter(void 0, void 0, void 0, function* () {
@@ -55,22 +57,20 @@ const checkForLowBalances = (subscribers) => __awaiter(void 0, void 0, void 0, f
                     if (daysRemaining < 5) {
                         var date = new Date();
                         var now = date.getTime();
-                        // need to check if we've already notified (currently once per day)
-                        if (notificationMap.has(address)) {
-                            let tokenMap = notificationMap.get(address);
+                        // need to check if we've already notified (currently once per day within 5 days)
+                        if (lowBalNotificationMap.has(address)) {
+                            let tokenMap = lowBalNotificationMap.get(address);
                             var sentTime = tokenMap.get(token);
                             if (now - sentTime > msPerDay) {
                                 tokenMap.set(token, now);
-                                notificationMap.set(address, tokenMap);
+                                lowBalNotificationMap.set(address, tokenMap);
                                 epns_1.lowBalanceWarning(address, token, daysRemaining);
-                            } //else {
-                            // console.log(`low bal for ${address} - notif already sent`);
-                            // }
+                            }
                         }
                         else {
                             let tokenMap = new Map();
                             tokenMap.set(token, now);
-                            notificationMap.set(address, tokenMap);
+                            lowBalNotificationMap.set(address, tokenMap);
                             epns_1.lowBalanceWarning(address, token, daysRemaining);
                         }
                     }
@@ -81,9 +81,9 @@ const checkForLowBalances = (subscribers) => __awaiter(void 0, void 0, void 0, f
             }
         }));
     }));
-    // check for new subs every min
-    setTimeout(superfluidMain, 0.2 * msPerMin);
+    setTimeout(superfluidMain, 10 * msPerMin);
 });
+const streamUpdateNotifs = [];
 const checkForUpdatedStream = (subscribers) => __awaiter(void 0, void 0, void 0, function* () {
     // Filters events on ConstantFlowAgreement contract for FlowUpdated() events in last few blocks
     let filter = sf.agreements.cfa.filters.FlowUpdated();
@@ -94,33 +94,39 @@ const checkForUpdatedStream = (subscribers) => __awaiter(void 0, void 0, void 0,
     provider.getLogs(filter).then((logs) => {
         logs.forEach((tx) => {
             let flowUpdatedEvent = sf.agreements.cfa.interface.parseLog(tx);
-            // console.log(flowUpdatedEvent);
+            let eventID = tx.transactionHash;
+            let tokenAddress = flowUpdatedEvent.args["token"];
+            let token = tokenAddresses.get(tokenAddress);
             let sender = flowUpdatedEvent.args["sender"];
             let receiver = flowUpdatedEvent.args["receiver"];
             let flowRate = flowUpdatedEvent.args["flowRate"];
-            // console.log(receiver);
-            // console.log(flowRate);
-            if (subscribers.indexOf(receiver) >= 0) {
-                if (flowRate.gt(0)) {
-                    // if flow > 0 -> new stream
-                    console.log("new stream?");
+            if (streamUpdateNotifs.indexOf(eventID) == -1) {
+                streamUpdateNotifs.push(eventID);
+                if (subscribers.indexOf(receiver) >= 0) {
+                    if (flowRate.gt(0)) {
+                        // if flow > 0 -> new incoming stream
+                        console.log("new stream?");
+                        epns_1.newIncomingStreamAlert(receiver, token, sender);
+                    }
+                    else if (flowRate.eq(0)) {
+                        // if flow == 0 -> stream cancelled
+                        console.log("incoming stream cancelled");
+                        epns_1.streamCancelledAlert(receiver, token, sender);
+                    }
                 }
-                else if (flowRate.eq(0)) {
-                    // if flow == 0 -> stream cancelled
-                    console.log("incoming stream cancelled");
-                    epns_1.streamCancelledAlert(receiver, "token", sender);
+                if (subscribers.indexOf(sender) >= 0) {
+                    if (flowRate.eq(0)) {
+                        // if flow == 0 -> stream ended
+                        console.log("outgoing stream ended");
+                        epns_1.streamHasRunOutAlert(sender, token, receiver);
+                    }
                 }
             }
-            if (subscribers.indexOf(sender) >= 0) {
-                if (flowRate.eq(0)) {
-                    // if flow == 0 -> stream ended
-                    console.log("outgoing stream ended");
-                    epns_1.streamHasRunOutAlert(sender, "token", receiver);
-                }
+            else {
+                console.log("already notified");
             }
         });
     });
-    // check for new subs every min
-    setTimeout(superfluidMain, 0.2 * msPerMin);
+    setTimeout(superfluidMain, 0.1 * msPerMin);
 });
 //# sourceMappingURL=superfluid.js.map

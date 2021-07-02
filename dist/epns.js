@@ -56,9 +56,9 @@ const streamHasRunOutAlert = (address, token, receiver) => __awaiter(void 0, voi
 });
 exports.streamHasRunOutAlert = streamHasRunOutAlert;
 // notifies a subscriber when they receive a new stream
-const newIncomingStreamAlert = (address, token) => __awaiter(void 0, void 0, void 0, function* () {
+const newIncomingStreamAlert = (address, token, sender) => __awaiter(void 0, void 0, void 0, function* () {
     const title = "You have a new stream!";
-    const message = `You have a new incoming stream of ${token}`;
+    const message = `You have a new incoming stream of ${token} from ${sender}`;
     const pTitle = `New stream for ${address}`;
     const pMessage = `${address} has a new stream of ${token}`;
     try {

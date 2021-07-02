@@ -10,6 +10,7 @@ import { lowBalanceWarning, streamCancelledAlert, streamHasRunOutAlert, newIncom
 const provider = new AlchemyProvider("ropsten", networkSecrets.alchemyKey);
 
 const supportedTokens = ["ETHx"];
+const tokenAddresses = new Map();
 
 const sf = new SuperfluidSDK.Framework({
     ethers: provider,
@@ -18,19 +19,20 @@ const sf = new SuperfluidSDK.Framework({
 
 export const initSF = async () => { 
     await sf.initialize();
+    tokenAddresses.set("0x6fC99F5591b51583ba15A8C2572408257A1D2797", "ETHx");
     superfluidMain();
 }
 
 const superfluidMain = async () => {
     var subscribers: string[] = await getChannelSubscribers();
-    // checkForLowBalances(subscribers);
+    checkForLowBalances(subscribers);
     checkForUpdatedStream(subscribers);
 }
 
 const msPerDay = 86400000;
 const msPerMin = 60000;
 
-var notificationMap = new Map();
+var lowBalNotificationMap = new Map();
 
 const checkForLowBalances = async (subscribers: string[]) => {
     subscribers.forEach(async (address) => {
@@ -54,21 +56,19 @@ const checkForLowBalances = async (subscribers: string[]) => {
                     if (daysRemaining < 5) {
                         var date = new Date();
                         var now = date.getTime();
-                        // need to check if we've already notified (currently once per day)
-                        if (notificationMap.has(address)) {
-                            let tokenMap = notificationMap.get(address);
+                        // need to check if we've already notified (currently once per day within 5 days)
+                        if (lowBalNotificationMap.has(address)) {
+                            let tokenMap = lowBalNotificationMap.get(address);
                             var sentTime = tokenMap.get(token);
                             if (now - sentTime > msPerDay) {
                                 tokenMap.set(token, now);
-                                notificationMap.set(address, tokenMap);
+                                lowBalNotificationMap.set(address, tokenMap);
                                 lowBalanceWarning(address, token, daysRemaining);
-                            } //else {
-                                // console.log(`low bal for ${address} - notif already sent`);
-                            // }
+                            }
                         } else {
                             let tokenMap = new Map();
                             tokenMap.set(token, now);
-                            notificationMap.set(address, tokenMap);
+                            lowBalNotificationMap.set(address, tokenMap);
                             lowBalanceWarning(address, token, daysRemaining);
                         }
                     }
@@ -78,13 +78,13 @@ const checkForLowBalances = async (subscribers: string[]) => {
             }
         })
     })
-    // check for new subs every min
-    setTimeout(superfluidMain, 0.2 * msPerMin);
+    setTimeout(superfluidMain, 10 * msPerMin);
 }
+
+const streamUpdateNotifs: string[] = [];
 
 const checkForUpdatedStream = async (subscribers: string[]) => {
     // Filters events on ConstantFlowAgreement contract for FlowUpdated() events in last few blocks
-
     let filter = sf.agreements.cfa.filters.FlowUpdated() 
 
     // Set block range 
@@ -95,34 +95,34 @@ const checkForUpdatedStream = async (subscribers: string[]) => {
     provider.getLogs(filter).then((logs: any) => {
         logs.forEach((tx: any) => {
             let flowUpdatedEvent = sf.agreements.cfa.interface.parseLog(tx);
+            let eventID = tx.transactionHash;
+            let tokenAddress = flowUpdatedEvent.args["token"];
+            let token = tokenAddresses.get(tokenAddress);
             let sender = flowUpdatedEvent.args["sender"];
             let receiver = flowUpdatedEvent.args["receiver"];
             let flowRate = flowUpdatedEvent.args["flowRate"];
 
-            // todo extract token & stop repeat notifs
+            if (streamUpdateNotifs.indexOf(eventID) == -1) {
+                streamUpdateNotifs.push(eventID);
 
-            if (subscribers.indexOf(receiver) >= 0) {
-                if (flowRate.gt(0)) {
-                    // if flow > 0 -> new incoming stream
-                    console.log("new stream?")
-                    newIncomingStreamAlert(receiver, "token", sender);
-                } else if (flowRate.eq(0)) {
-                    // if flow == 0 -> stream cancelled
-                    console.log("incoming stream cancelled");
-                    streamCancelledAlert(receiver, "token", sender);
+                if (subscribers.indexOf(receiver) >= 0) {
+                    if (flowRate.gt(0)) {
+                        // if flow > 0 -> new incoming stream
+                        newIncomingStreamAlert(receiver, token, sender);
+                    } else if (flowRate.eq(0)) {
+                        // if flow == 0 -> incoming stream cancelled
+                        streamCancelledAlert(receiver, token, sender);
+                    }
+                }
+    
+                if (subscribers.indexOf(sender) >= 0) {
+                    if (flowRate.eq(0)) {
+                        // if flow == 0 -> outgoing stream ended
+                        streamHasRunOutAlert(sender, token, receiver);
+                    }
                 }
             }
-
-            if (subscribers.indexOf(sender) >= 0) {
-                if (flowRate.eq(0)) {
-                    // if flow == 0 -> stream ended
-                    console.log("outgoing stream ended");
-                    streamHasRunOutAlert(sender, "token", receiver);
-                }
-            }
-            
         });
     });
-    // check for new subs every min
-    setTimeout(superfluidMain, 0.2 * msPerMin);
+    setTimeout(superfluidMain, 10 * msPerMin);
 }
