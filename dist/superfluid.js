@@ -119,11 +119,8 @@ const checkForUpdatedStream = (subscribers) => __awaiter(void 0, void 0, void 0,
                     }
                 }
             }
-            else {
-                console.log("already notified");
-            }
         });
     });
-    setTimeout(superfluidMain, 0.1 * msPerMin);
+    setTimeout(superfluidMain, 10 * msPerMin);
 });
 //# sourceMappingURL=superfluid.js.map

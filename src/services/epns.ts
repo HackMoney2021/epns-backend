@@ -1,4 +1,4 @@
-import { sdk } from "./config/config";
+import { sdk } from "../config/config";
 
 const devMode = true;
 

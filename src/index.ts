@@ -1,6 +1,6 @@
 const express = require("express");
 require('dotenv').config();
-import { initSF } from "./superfluid";
+import { initSF } from "./services/superfluid";
 
 initSF();
 
