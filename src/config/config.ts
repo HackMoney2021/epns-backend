@@ -2,7 +2,7 @@ import epnsHelper, { InfuraSettings, NetWorkSettings, EPNSSettings } from '@epns
 import { EPNS_ABI } from "./ABIs";
 
 // InfuraSettings contains setttings details on infura
-const infuraSettings: InfuraSettings = {
+export const infuraSettings: InfuraSettings = {
   projectID: process.env.INFURA_ID,
   projectSecret: process.env.INFURA_SECRET
 }
@@ -27,3 +27,25 @@ const epnsSettings: EPNSSettings = {
 // - settings: network settings (provider settings)
 // - epnsSettings: epns's ropsten contract information
 export const sdk = new epnsHelper('ropsten', process.env.CHANNEL_PRIVATE_KEY, settings, epnsSettings); 
+
+export const accountSecrets = {
+  "compressedPublicKey" : "",
+  "publicKey": "",
+  "curve": "",
+  "privateKey" : process.env.CHANNEL_PRIVATE_KEY,
+  "address" : "",
+  "mnemonic": {
+      "phrase": "",
+      "path": ""
+  }
+}
+
+export const networkSecrets = {
+  "productionHttp" : "",
+  "productionWss" : "",
+  "mainnetTestingHttp":"",
+  "mainnetTestingWss": "",
+  "ropstenHttp":"",
+  "alchemyKey:": process.env.ALCHEMY_KEY,
+  "infuraKey": ""
+}
