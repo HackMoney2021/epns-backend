@@ -1,57 +1,58 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initSF = void 0;
 const SuperfluidSDK = require("@superfluid-finance/js-sdk");
 const { AlchemyProvider } = require("@ethersproject/providers");
 const { BigNumber } = require('@ethersproject/bignumber');
 const { networkSecrets } = require("../config/config");
 const { getChannelSubscribers } = require("./epns");
-
-import { lowBalanceWarning, streamCancelledAlert, streamHasRunOutAlert, newIncomingStreamAlert } from "./epns";
-
+const epns_1 = require("./epns");
 const provider = new AlchemyProvider("ropsten", networkSecrets.alchemyKey);
-
 const supportedTokens = ["ETHx"];
 const tokenAddresses = new Map();
-
 const sf = new SuperfluidSDK.Framework({
     ethers: provider,
     tokens: supportedTokens
 });
-
-export const initSF = async () => { 
-    await sf.initialize();
+const initSF = () => __awaiter(void 0, void 0, void 0, function* () {
+    yield sf.initialize();
     tokenAddresses.set("0x6fC99F5591b51583ba15A8C2572408257A1D2797", "ETHx");
     superfluidMain();
-}
-
-const superfluidMain = async () => {
-    var subscribers: string[] = await getChannelSubscribers();
+});
+exports.initSF = initSF;
+const superfluidMain = () => __awaiter(void 0, void 0, void 0, function* () {
+    var subscribers = yield getChannelSubscribers();
     checkForLowBalances(subscribers);
     checkForUpdatedStream(subscribers);
-}
-
+});
 const msPerDay = 86400000;
 const msPerMin = 60000;
-
 var lowBalNotificationMap = new Map();
-
-const checkForLowBalances = async (subscribers: string[]) => {
-    subscribers.forEach(async (address) => {
-        supportedTokens.forEach(async (token: string) => {
+const checkForLowBalances = (subscribers) => __awaiter(void 0, void 0, void 0, function* () {
+    subscribers.forEach((address) => __awaiter(void 0, void 0, void 0, function* () {
+        supportedTokens.forEach((token) => __awaiter(void 0, void 0, void 0, function* () {
             // initialises superfluid user object with specific token
             let user = sf.user({ address: address, token: sf.tokens[token].address });
             try {
                 // returns account details of user
-                var details = await user.details();
+                var details = yield user.details();
                 let netFlow = details.cfa.netFlow;
-
                 // if users outgoing > incoming
                 if (netFlow < 0) {
-                    var balance = await sf.tokens[token].realtimeBalanceOfNow(address);
+                    var balance = yield sf.tokens[token].realtimeBalanceOfNow(address);
                     var available = balance.availableBalance;
                     var bigNumberNetFlow = BigNumber.from(netFlow * -1);
-
                     let timeRemaining = available.div(bigNumberNetFlow);
                     let daysRemaining = (((timeRemaining / 60) / 60) / 24);
-
                     if (daysRemaining < 5) {
                         var date = new Date();
                         var now = date.getTime();
@@ -62,37 +63,35 @@ const checkForLowBalances = async (subscribers: string[]) => {
                             if (now - sentTime > msPerDay) {
                                 tokenMap.set(token, now);
                                 lowBalNotificationMap.set(address, tokenMap);
-                                lowBalanceWarning(address, token, daysRemaining);
+                                epns_1.lowBalanceWarning(address, token, daysRemaining);
                             }
-                        } else {
+                        }
+                        else {
                             let tokenMap = new Map();
                             tokenMap.set(token, now);
                             lowBalNotificationMap.set(address, tokenMap);
-                            lowBalanceWarning(address, token, daysRemaining);
+                            epns_1.lowBalanceWarning(address, token, daysRemaining);
                         }
                     }
                 }
-            } catch (e) {
+            }
+            catch (e) {
                 console.error(e);
             }
-        })
-    })
+        }));
+    }));
     setTimeout(superfluidMain, 10 * msPerMin);
-}
-
-const streamUpdateNotifs: string[] = [];
-
-const checkForUpdatedStream = async (subscribers: string[]) => {
+});
+const streamUpdateNotifs = [];
+const checkForUpdatedStream = (subscribers) => __awaiter(void 0, void 0, void 0, function* () {
     // Filters events on ConstantFlowAgreement contract for FlowUpdated() events in last few blocks
-    let filter = sf.agreements.cfa.filters.FlowUpdated() 
-
+    let filter = sf.agreements.cfa.filters.FlowUpdated();
     // Set block range 
-    filter.fromBlock = provider.getBlockNumber().then((b:number) => b - 10000); // To do: replace fromBlock with the last toBlock used
+    filter.fromBlock = provider.getBlockNumber().then((b) => b - 10000); // To do: replace fromBlock with the last toBlock used
     filter.toBlock = "latest";
-
     // And query:
-    provider.getLogs(filter).then((logs: any) => {
-        logs.forEach((tx: any) => {
+    provider.getLogs(filter).then((logs) => {
+        logs.forEach((tx) => {
             let flowUpdatedEvent = sf.agreements.cfa.interface.parseLog(tx);
             let eventID = tx.transactionHash;
             let tokenAddress = flowUpdatedEvent.args["token"];
@@ -100,28 +99,27 @@ const checkForUpdatedStream = async (subscribers: string[]) => {
             let sender = flowUpdatedEvent.args["sender"];
             let receiver = flowUpdatedEvent.args["receiver"];
             let flowRate = flowUpdatedEvent.args["flowRate"];
-
             if (streamUpdateNotifs.indexOf(eventID) == -1) {
                 streamUpdateNotifs.push(eventID);
-
                 if (subscribers.indexOf(receiver) >= 0) {
                     if (flowRate.gt(0)) {
                         // if flow > 0 -> new incoming stream
-                        newIncomingStreamAlert(receiver, token, sender);
-                    } else if (flowRate.eq(0)) {
+                        epns_1.newIncomingStreamAlert(receiver, token, sender);
+                    }
+                    else if (flowRate.eq(0)) {
                         // if flow == 0 -> incoming stream cancelled
-                        streamCancelledAlert(receiver, token, sender);
+                        epns_1.streamCancelledAlert(receiver, token, sender);
                     }
                 }
-    
                 if (subscribers.indexOf(sender) >= 0) {
                     if (flowRate.eq(0)) {
                         // if flow == 0 -> outgoing stream ended
-                        streamHasRunOutAlert(sender, token, receiver);
+                        epns_1.streamHasRunOutAlert(sender, token, receiver);
                     }
                 }
             }
         });
     });
     setTimeout(superfluidMain, 10 * msPerMin);
-}
+});
+//# sourceMappingURL=superfluid.js.map

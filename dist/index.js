@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 require('dotenv').config();
-const superfluid_1 = require("./superfluid");
+const superfluid_1 = require("./services/superfluid");
 superfluid_1.initSF();
 // const app = express();
 // const port = process.env.PORT;
